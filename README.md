@@ -231,3 +231,49 @@ RBQScript 还支持第二种函数定义：Lambda 匿名函数。格式为：`(l
 - `num` 接受一个字符串参数，将其转换为一个实数后返回；
 
 - `big` 接受一个字符串参数，将其转换为一个高精度整数后返回；
+
+### update 6th Dec 2021:
+
+加入了对象系统，语法如下：
+
+```
+struct ClassName [extends SuperName] (field1, field2, field3...)
+```
+这将会定义一个叫做 ClassName 的结构体。目前 RBQScript **不支持成员函数**，因此称作是 struct，不是 class。
+
+构造对象的方法：使用类名作为函数名调用，**从父类开始，按声明的字段顺序写入参数**。如：
+
+```
+struct Class(a, b)
+struct Class2 extends Class(c, d)
+obj = Class("hello", 5 + 9)
+obj2 = Class2("world", 3 + 1, 5.433, {1, 2, 3})
+print("obj: a is", obj.a, ", b is", obj.b)
+print("obj2: a is", obj2.a, ", b is", obj2.b, ", c is", obj2.c, ", d[1] is", obj2.d[1])
+```
+
+输出：
+```
+obj: a is hello , b is 14
+obj2: a is world , b is 4 , c is 5.433 , d[1] is 2
+```
+
+**推荐自己定义构造函数，如下：**
+
+```
+struct Class(a, b)
+function make_Class(a) {
+    return Class(a, a * a)
+}
+```
+
+Object 是所有类的基类，在定义的时候不需要显示地写上 `extends Object`，会自动继承。
+
+特殊字段：`obj.class_name` 返回该对象的类的名称，`obj.super_name` 返回该对象的基类的名称。
+
+```
+struct Person(name)
+struct OIer extends Person(age)
+oier = OIer("ff0", 343)
+print(oier.name, oier.age, oier.class_name, oier.super_name)
+```
