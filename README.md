@@ -277,3 +277,9 @@ struct OIer extends Person(age)
 oier = OIer("ff0", 343)
 print(oier.name, oier.age, oier.class_name, oier.super_name)
 ```
+
+输出：
+
+```
+ff0 343 OIer Person
+```
