@@ -239,7 +239,7 @@ RBQScript 还支持第二种函数定义：Lambda 匿名函数。格式为：`(l
 ```
 struct ClassName [extends SuperName] (field1, field2, field3...)
 ```
-这将会定义一个叫做 ClassName 的结构体。目前 RBQScript **不支持成员函数**，因此称作是 struct，不是 class。
+这将会定义一个叫做 ClassName 的结构体。目前 RBQScript **struct 不支持成员函数**，因此称作是 struct，不是 class。
 
 构造对象的方法：使用类名作为函数名调用，**从父类开始，按声明的字段顺序写入参数**。如：
 
@@ -308,4 +308,6 @@ class <classname> extends <supername> {
 
 3. 为保持兼容，struct 保留，一切行为不变。
 
-4. 建议：若在成员方法内部声明局部变量，显式加上 local 关键字。
+4. **若在成员方法内部声明局部变量，建议显式加上 local 关键字**。
+
+5. **struct 的效率高于 class，若声明纯数据类型的数据复合体，建议使用 struct 而非 class**。
