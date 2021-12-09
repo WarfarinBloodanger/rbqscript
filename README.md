@@ -283,3 +283,29 @@ print(oier.name, oier.age, oier.class_name, oier.super_name)
 ```
 ff0 343 OIer Person
 ```
+
+
+### update 9th Dec 2021:
+
+正式加入 `class` 关键字，语法：
+
+```
+class <classname> extends <supername> {
+	var field
+	var f1, f2, f3...
+	function method1(v) {
+		print(this.f1)
+	}
+	function method2() {
+		this.f2 = this.f1 + this.f3
+	}
+}
+```
+
+1. 字段和方法全部都是 public 且非静态类型。
+
+2. **在成员方法内部访问字段必须显式的加上 this 关键字**。
+
+3. 为保持兼容，struct 保留，一切行为不变。
+
+4. 建议：若在成员方法内部声明局部变量，显式加上 local 关键字。
