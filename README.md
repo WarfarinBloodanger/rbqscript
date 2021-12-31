@@ -1,8 +1,6 @@
-# RBQscript
+# RBQScript
 
-FF0Script 的改进版。效率大幅提升。[原 FF0Script 链接](https://github.com/WarfarinBloodanger/ff0-script)
-
-其实这就是 FF0Script 4.0+ 的版本。
+弱类型脚本语言。
 
 请注意：**与 4.0 之前的版本不兼容**。
 
