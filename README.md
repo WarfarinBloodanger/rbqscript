@@ -6,6 +6,9 @@
 
 ## Part 1. RBQScript 启动方式：
 
+1. 首先找到要下载的版本，如 rbq-472 文件夹内下载 4.72 版本；
+2. 下载 fvm.cpp，使用 C++ 编译器（作者编译器版本：TDM GCC 4.8.1 64-bit Release）编译生成 fvm.exe。
+
 编译器兼解释器：`fvm.exe`。
 
 总命令格式：
