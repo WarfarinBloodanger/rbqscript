@@ -7,7 +7,7 @@ using namespace std;
 const int LIMIT = 0x7fffffff;
 
 const string VM_NAME = "RBQScript";
-const string VM_VERSION = "4.72";
+const string VM_VERSION = "4.50";
 bool debug = false;
 bool enable_big = false;
 bool step_pause = false;
@@ -841,7 +841,7 @@ struct ObjectManager {
 	
 	void define_class(string cls, string super, vector<string> field_name, vector<char> ftype, vector<string> fval_type, bool permission = false) {
 		if(!permission && cls == "Object") {
-			error("Shouldn't overwrite Object class.", "SecurityError");
+			error("Shouldn't overwrite Object class.", "RuntimeError");
 		}
 		int supersize = fields[super].size();
 		for(int i = 0; i < fields[super].size(); i++) {
@@ -938,7 +938,7 @@ struct FileManager {
 	}
 	
 	void check_handle(int handle) {
-		if(handle < 0 || handle >= size) error("invalid handle: " + tostr(handle));
+		if(handle < 0 || handle >= size) error("invalid handle: " + tostr(handle), "RuntimeError");
 	}
 	
 	void file_close(int handle) {
@@ -1486,13 +1486,13 @@ inline int get_free() {
 Val get_sub(Val, Val);
 
 Val get_heap(int loc) {
-	if(loc < 0 || loc >= MAX_HEAP_SIZE) error("heap index out of bound.");
+	if(loc < 0 || loc >= MAX_HEAP_SIZE) error("heap index '" + tostr(loc) + "' out of bound", "RuntimeError");
 	if(loc < ARR_GROW) return Val((string)"" + (char)loc);
 	return heap[loc];
 }
 
 void set_heap(int loc, Val v) {
-	if(loc < ARR_GROW || loc >= MAX_HEAP_SIZE) error("set heap index out of bound.");
+	if(loc < ARR_GROW || loc >= MAX_HEAP_SIZE) error("heap index '" + tostr(loc) + "'out of bound", "RuntimeError");
 	heap[loc] = v;
 }
 
@@ -1507,7 +1507,7 @@ inline bool is_protected(int p) {
 	return protect.find(p) != protect.end();
 }
 void store(int pos, Val v) {
-	if(is_protected(pos)) error("assigning constant at " + tostr(pos));
+	if(is_protected(pos)) error("assigning '" + get_name(pos) + "' which is a constant", "RuntimeError");
 	Val v2;
 	for(int i = itop; i >= 1; i--) {
 		v2 = reg.r[i * MAX_LOCAL_CNT + pos];
@@ -1522,12 +1522,12 @@ void store(int pos, Val v) {
 bool not_check = false;
 string get_name(int);
 Val load(int pos) {
-	if(!not_check && pos > MAX_LOCAL_CNT) error("Checker: Loading " + get_name(pos) + " that doesn't initialized.");
+	if(!not_check && pos > MAX_LOCAL_CNT) error("Loading " + get_name(pos) + " that doesn't initialized.", "NameError");
 	for(int i = itop; i >= 1; i--) {
 		Val v = reg.r[i * MAX_LOCAL_CNT + pos];
 		if(v.type != UNDEFINED_TYPE) return v;
 	}
-	error("Loading " + get_name(pos) + " that doesn't initialized.");
+	error("Loading " + get_name(pos) + " that doesn't initialized", "NameError");
 }
 
 inline void release() {
@@ -1615,10 +1615,10 @@ Val get_sub(Val a, Val b) {
 			return a.str.substr(b.rng.from, b.rng.to - b.rng.from);
 		}
 		else if(b.type == NUM_TYPE) return (string)"" + a.str[(int)b.num];
-		else error("should use 'range' or 'number' as subscript of 'string', not '" + get_type_name(b) + "'");
+		else error("should use 'range' or 'number' as subscript of 'string', not '" + get_type_name(b) + "'", "RuntimeError");
 	}
 	else if(a.type == REF_TYPE) {
-		if(b.type != NUM_TYPE) error("should use 'number' as subscript of 'reference', not '" + get_type_name(b) + "'");
+		if(b.type != NUM_TYPE) error("should use 'number' as subscript of 'reference', not '" + get_type_name(b) + "'", "RuntimeError");
 		if(b.type == RNG_TYPE) return range_sub(a, b);
 		return ref_val(a.ref + b.num);
 	} 
@@ -1627,15 +1627,15 @@ Val get_sub(Val a, Val b) {
 			b.extra = a.obj_ref;
 			return b;
 		}
-		if(b.type != STR_TYPE) error("'" + get_type_name(b) + "' is not a valid member of '" + get_type_name(a) + "'");
+		if(b.type != STR_TYPE) error("'" + get_type_name(b) + "' is not a valid member of '" + get_type_name(a) + "'", "RuntimeError");
 		return obj_val(a.obj_ref + manager.get_id(obj_heap[a.obj_ref / MAX_FIELD_CNT].class_name, b.str));
 	}
 	else if(a.type == RNG_TYPE) {
-		if(b.type != NUM_TYPE) error("should use 'number' as subscript of 'range', not '" + get_type_name(b) + "'");
+		if(b.type != NUM_TYPE) error("should use 'number' as subscript of 'range', not '" + get_type_name(b) + "'", "RuntimeError");
 		if(b.type == RNG_TYPE) return range_sub(a, b);
 		return a.rng.from + b.num;
 	}
-	else error("subscript type doesn't match");
+	else error("operation '" + get_type_name(a) + "[" + get_type_name(b) + "]' is invalid", "RuntimeError");
 }
 
 Val make_array(vector<Val> arr) {
@@ -1707,13 +1707,13 @@ Val range_sub(Val a, Val b) {
 		if(b.rng.to == -1) to = get_len(a);
 		else to = b.rng.to;
 		if(a.type == STR_TYPE) {
-			if(to > a.str.length() || from < 0) error("string index out of bound");
+			if(to > a.str.length() || from < 0) error("string index '" + b.to_str() + "' out of bound", "RuntimeError");
 			return a.str.substr(from, to - from); 
 		}
 		else if(a.type == REF_TYPE) {
-			if(to >= ARR_GROW || from < 0) error("reference index out of bound");
+			if(to >= ARR_GROW || from < 0) error("reference index '" + b.to_str() + "' out of bound", "RuntimeError");
 			vector<Val> vals;
-			for(int i = from; i < to; i++) printf("clone %d\n", i), vals.push_back(clone(get_heap(get_sub(a, i).ref))), printf("Pushing %s\n", clone(get_heap(get_sub(a, i).ref)).to_str().c_str());
+			for(int i = from; i < to; i++) vals.push_back(clone(get_heap(get_sub(a, i).ref)));
 			Val ret = make_array(vals);
 			cout << ret.to_str() << endl;
 			return ret;
@@ -1724,7 +1724,7 @@ Val range_sub(Val a, Val b) {
 			Val ret = make_array(vals);
 			return ret;
 		}
-		else error("invalid arguments using range");
+		else error("operation '" + get_type_name(a) + "[" + get_type_name(b) + "]' is invalid", "RuntimeError");
 	}
 	return null_val();
 }
@@ -1745,7 +1745,7 @@ int get_len(Val p) {
 	else if(p.type == RNG_TYPE) {
 		return p.rng.to - p.rng.from;
 	}
-	else error("invalid arguments");
+	else error("type '" + get_type_name(p) + "' has no 'len' property", "RuntimeError");
 }
 
 int make_obj(Object obj) {
@@ -1765,8 +1765,8 @@ void map_values(map<Val, Val> & hashmap, vector<Val> & vals) {
 }
 
 Val call_builtin(string func, Val * params, int pcnt, int obj_id) {
-	#define CNT(a) if(pcnt != a) error("wrong count of arguments")
-	#define TYPE(a, t) if(pcnt <= a || params[a].type != t##_TYPE) error("invalid arguments of builtin function '" + func + "'")
+	#define CNT(a) if(pcnt != a) error("number of arguments of builtin function '" + func + "' should be " + tostr(a) + ", given " + tostr(pcnt), "RuntimeError")
+	#define TYPE(a, t) if(pcnt <= a || params[a].type != t##_TYPE) error("arguments of builtin function '" + func + "' should be '" + type_name[t##_TYPE] + "', not '" + params[a].type + "'", "RuntimeError")
 	#define CHECK_MATH(x, m) \
 	else if(func == (string)"math_" + x) {\
 		TYPE(0, NUM);\
@@ -1869,7 +1869,7 @@ Val call_builtin(string func, Val * params, int pcnt, int obj_id) {
 			}
 			return len;
 		}
-		else error("wrong count of arguments");
+		error("number of arguments of builtin function '" + func + "' should between 1 and 4, given " + tostr(pcnt), "RuntimeError");
 	}
 	CHECK_MATH("sin", sin)
 	CHECK_MATH("cos", cos)
@@ -1891,7 +1891,7 @@ Val call_builtin(string func, Val * params, int pcnt, int obj_id) {
 			TYPE(1, STR);
 			return file_manager.file_open(params[0].str, params[1].str);
 		}
-		else error("wrong count of arguments");
+		error("number of arguments of builtin function '" + func + "' should between 1 and 2, given " + tostr(pcnt), "RuntimeError");
 	}
 	else if(func == "file_close") {
 		CNT(1);
@@ -1916,21 +1916,21 @@ Val call_builtin(string func, Val * params, int pcnt, int obj_id) {
 	}
 	else if(func == "read_string") {
 		if(pcnt == 1) cout << params[0].to_str();
-		else if(pcnt) error("wrong count of arguments");
+		else if(pcnt) error("number of arguments of builtin function '" + func + "' should between 0 and 1, given " + tostr(pcnt), "RuntimeError");
 		string s;
 		cin >> s;
 		return s;
 	}
 	else if(func == "read_number") {
 		if(pcnt == 1) cout << params[0].to_str();
-		else if(pcnt) error("wrong count of arguments");
+		else if(pcnt) error("number of arguments of builtin function '" + func + "' should between 0 and 1, given " + tostr(pcnt), "RuntimeError");
 		double x;
 		cin >> x;
 		return x;
 	}
 	else if(func == "read_line") {
 		if(pcnt == 1) cout << params[0].to_str();
-		else if(pcnt) error("wrong count of arguments");
+		else if(pcnt) error("number of arguments of builtin function '" + func + "' should between 0 and 1, given " + tostr(pcnt), "RuntimeError");
 		string s;
 		getline(cin, s);
 		return s;
@@ -1963,7 +1963,7 @@ Val call_builtin(string func, Val * params, int pcnt, int obj_id) {
 		return make_array(vals);
 	}
 	else if(func == "ascii2str") {
-		if(pcnt <= 0) error("wrong count of arguments");
+		if(pcnt <= 0) error("number of arguments of builtin function '" + func + "' should bigger than 0, given " + tostr(pcnt), "RuntimeError");
 		if(params[0].type == REF_TYPE) {
 			CNT(1);
 			string str = "";
@@ -2585,7 +2585,7 @@ vector<string> tokenize(string text) {
 				}
                 else final.push_back(ret[i]);
             } else if(ret[i] == ".") {
-            	if(i >= ret.size() - 1) error("need numbers or an identifier after '.' .");
+            	if(i >= ret.size() - 1) error("need number or an identifier after '.' .", "SyntaxError");
             	if(isdigit(ret[i - 1][0]) || ret[i - 1][0] == '-') {
             		final[final.size() - 1] += ret[i] + ret[i + 1];
             		i++;
@@ -2698,12 +2698,12 @@ string string_expression(string str) {
     for(int i = 0; i < str.length(); i++) {
         if(str[i] == '\\') {
             i++;
-            if(i > str.length()) error("need an escape character after '\\'.");
+            if(i > str.length()) error("need an escape character after '\\'.", "SyntaxError");
             switch(str[i]) {
             	case 'u': {
             		string s = "";
             		unsigned int hex = 0;
-            		if(i + 4 >= str.length()) error("invalid unicode sequence " + str);
+            		if(i + 4 >= str.length()) error("invalid unicode sequence " + str, "SyntaxError");
             		s += str[++i];
             		s += str[++i];
             		hex = to_hex("0x" + s);
@@ -2746,7 +2746,7 @@ string string_expression(string str) {
                     string msg = " unsupported escape character: '\\";
                     msg += str[i];
                     msg += "'.";
-                    error(msg);
+                    error(msg, "SyntaxError");
                     break;
                 }
             }
@@ -2817,7 +2817,7 @@ string get_name(int id) {
 		int idx = (*it).second;
 		if(idx == id) return name;
 	}
-	error("invalid register " + tostr(id));
+	error("invalid register " + tostr(id), "RuntimeError");
 }
 int varcnt;
 int get_id(string var) {
@@ -2868,7 +2868,7 @@ vector<unsigned char> load_func(string s) {
 vector<unsigned char> compile_big_int(string b) {
 	vector<unsigned char> rets;
 	for(int i = 0; i < b.length(); i++) {
-    	if(!isdigit(b[i])) error("invalid big integer string " + b);
+    	if(!isdigit(b[i])) error("invalid big integer string " + b, "RuntimeError");
     	rets.push_back(LD0 + b[i] - '0');
 	}
 	int siz = b.length();
@@ -2948,7 +2948,7 @@ vector<unsigned char> compile_expression(string expr) {
     }
     str = tokenize(expr);
     if(str[0] == "lambda") {
-    	if(str.size() != 3) error("lambda syntax must be '(lambda {<params>} {<expr})'");
+    	if(str.size() != 3) error("lambda syntax must be '(lambda {<params>} {<expr})'", "SyntaxError");
     	return make_lambda(str[2], str[1]);
 	}
 	else if(str.size() == 2 && (str[1] == "++" || str[1] == "--")) {
@@ -3587,16 +3587,11 @@ void get_arg_name(vector<string> vs, vector<string> & arg_name, vector<string> &
 vector<unsigned char> make_function(string & fname, string prefix = "") {
 	vector<unsigned char> rets;
 	Token func_name = next_token();
-	fname = func_name.str;
-	string fname2 = prefix + fname;
-	
-	all_func.push_back(fname2);
 	Token param_list = next_token();
 	param_list = MIDDLE(param_list.str);
 	vector<string> args;
 	vector<string> arg_type;
 	get_arg_name(remove_all(split(param_list.str, ','), ","), args, arg_type);
-	int func_id = get_id(fname2);
 	
 	vector<unsigned char> func, tmp, tmp2;
 	for(int i = 0; i < arg_type.size(); i++) {
@@ -3617,6 +3612,13 @@ vector<unsigned char> make_function(string & fname, string prefix = "") {
 		for(int i = 0; i < tmp.size(); i++) func.push_back(tmp[i]);
 	}
 	
+	fname = func_name.str;
+	
+	string fname2 = prefix + fname;
+	all_func.push_back(fname2);
+	int func_id = get_id(fname2);
+	int id = func_id;
+	
 	tmp = compile_statement();
 	for(int i = 0; i < tmp.size(); i++) func.push_back(tmp[i]);
 	vector<int> regs;
@@ -3629,7 +3631,7 @@ vector<unsigned char> make_function(string & fname, string prefix = "") {
 	byte_map[func_id][func.size()] = END;
 	for(int i = 0; i < args.size(); i++) regs.push_back(get_id(args[i]));
 	reg_map[func_id] = regs;
-	int id = func_id;
+	
 	// Set func_name = func_id
 	vector<unsigned char> lint = load_func(fname2);
 	for(int i = 0; i < lint.size(); i++) rets.push_back(lint[i]);
@@ -4086,7 +4088,7 @@ stringstream all_source("");
 void read_file_source(string file) {
 	ifstream fcin(file.c_str());
 	if(!fcin) {
-		error("file " + file + " not found.");
+		error("file " + file + " not found.", "FileError");
 	}
 	string str;
 	while(getline(fcin, str)) {
@@ -4249,14 +4251,14 @@ int main(int argc, char ** argv) {
 			i++;
 			cli = false;
 			save = true;
-			if(i >= argc) error("need a file name after option '-i'");
+			if(i >= argc) error("need a file name after option '-i'", "SyntaxError");
 			input_file = argv[i];
 			output_file = replace_ext(input_file);
 		}
 		else if(p == "-o") {
 			i++;
 			save = true;
-			if(i >= argc) error("need a file name after option '-o'");
+			if(i >= argc) error("need a file name after option '-o'", "SyntaxError");
 			output_file = argv[i];
 		}
 		else if(p[0] == '-' && p[1] != 'x') {
