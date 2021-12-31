@@ -333,7 +333,10 @@ class <classname> extends <supername> {
 ```
 a = map()
 a["test"] = 5
+a[4] = "num"
 print(a.test)
+list = keys(a)
+foreach(i, list) print(i, "->", list[i])
 ```
 
 **Reference**，即列表类型**不再支持字符串下标**。以下代码会报错：
