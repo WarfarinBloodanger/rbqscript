@@ -311,3 +311,53 @@ class <classname> extends <supername> {
 4. **若在成员方法内部声明局部变量，建议显式加上 local 关键字**。
 
 5. **struct 的效率高于 class，若声明纯数据类型的数据复合体，建议使用 struct 而非 class**。
+
+### update 31th Dec 2021
+
+新增一种内置类型：`map` 类，即映射表。
+
+创建方式：`test = map()`。
+
+可以使用任何类型作为 map 的键值，如果该键在 map 中不存在，则会返回 `undefined` 值。
+
+语法：`a[key] = value`。如果 `key` 是字符串类型，可以使用 `a.key = value`。
+
+配套提供了 3 个新内置函数：
+
+- clear_map，接受一个 map 类型的参数，清除 map 中的所有内容；
+- keys，接受一个 map 类型的参数，返回一个列表，表示 map 中的所有键名；
+- values，接受一个 map 类型的参数，返回一个列表，表示 map 中的所有键值。
+
+示例如下：
+
+```
+a = map()
+a["test"] = 5
+print(a.test)
+```
+
+**Reference**，即列表类型**不再支持字符串下标**。以下代码会报错：
+
+```
+a = {}
+a["test"] = 5
+```
+
+报错：`RuntimeError: "should use 'number' as subscript of 'reference', not 'string'"`。
+
+加入了类型检查机制，语法与 Kotlin / TypeScript 类似。
+
+```
+class Foo {
+	var x [: param_type], y [: param_type]
+}
+function add(a [: param_type], b [: param_type]...) [: param_type] {
+	return a + b
+}
+```
+
+类型检查机制是可选的。`any` 可以匹配所有类型。
+
+如果没有在参数 / 函数声明之后加上类型声明，则会默认使用 `any`。**请注意：Object 只会匹配对象类型，内置类型无法匹配。**
+
+将错误提示修改得更加可读，减少了 VerifyError 的数量。
