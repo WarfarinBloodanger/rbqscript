@@ -1071,7 +1071,7 @@ inline Val operator && (Val a, Val b) {
 }
 
 inline Val operator || (Val a, Val b) {
-	return (!a.num) && (!b.num);
+	return !((!a) && (!b));
 }
 
 inline Val operator % (Val a, Val b) {
