@@ -365,3 +365,13 @@ function add(a [: param_type], b [: param_type]...) [: param_type] {
 如果没有在参数 / 函数声明之后加上类型声明，则会默认使用 `any`。**请注意：Object 只会匹配对象类型，内置类型无法匹配。**
 
 将错误提示修改得更加可读，减少了 VerifyError 的数量。
+
+### update 7th Feb 2022
+
+加入了对象序列化 / 反序列化函数（serialize 和 unserialize）。
+
+改写部分代码以适配 C++ 11 标准。
+
+加入了 Windows 和 Linux 系统下的加载本地方法函数（load_native）。
+
+修复部分 0day Bug。
