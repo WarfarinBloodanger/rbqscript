@@ -877,7 +877,6 @@ struct Object {
 	char type;
 	string class_name;
 	Object() { type = 0; }
-	~Object() {} 
 };
 
 Object obj_heap[MAX_OBJ_CNT];
@@ -885,15 +884,11 @@ bool obj_used[MAX_OBJ_CNT];
 bool obj_visible[MAX_OBJ_CNT];
 priority_queue<int> obj_pool;
 
-int get_next_obj() {
-	int x = obj_pool.top(); obj_pool.pop();
-	obj_used[x] = true;
-	return x * MAX_FIELD_CNT;
-}
+int get_next_obj();
 
 void free_obj(int ref) {
-	obj_used[ref / MAX_FIELD_CNT] = false;
-	obj_pool.push(ref / MAX_FIELD_CNT);
+	obj_used[ref] = false;
+	obj_pool.push(ref);
 }
 
 enum {
@@ -2172,6 +2167,13 @@ void gc() {
 			free_obj(i);
 		}
 	}
+}
+
+int get_next_obj() {
+	int x = obj_pool.top(); obj_pool.pop();
+	if((double)obj_pool.size() / MAX_OBJ_CNT < 1 - GC_START) gc();
+	obj_used[x] = true;
+	return x * MAX_FIELD_CNT;
 }
 
 int hash_cnt;
