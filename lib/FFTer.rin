@@ -13,7 +13,7 @@ class Complex {
 }
 
 function conv(f : reference, flag : number) {
-	foreach(i, (0 : n)) {
+	foreach(i, range(0, n)) {
 		if(i < tr[i]) {
 			local tmp = f[i]
 			f[i] = f[tr[i]]
@@ -49,14 +49,14 @@ tr = {}
 
 n = read_number()
 m = read_number()
-foreach(i, (0 : (n + 1))) {
+foreach(i, range(0, (n + 1))) {
 	p[i] = 0
 	f[i] = 0
 }
-foreach(i, (0 : (n + 1))) {
+foreach(i, range(0, (n + 1))) {
 	f[i] = read_number()
 }
-foreach(i, (0 : (m + 1))) {
+foreach(i, range(0, (m + 1))) {
 	p[i] = read_number()
 }
 
