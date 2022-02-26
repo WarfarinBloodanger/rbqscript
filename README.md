@@ -1,5 +1,39 @@
 # RBQScript
 
+### update 26th Feb 2022
+
+- 修复了对象不会被垃圾回收的 bug；
+- 修复了对象垃圾回收错误的 bug；
+- 修复了垃圾回收后内存未释放的 bug；
+- 加入了 `overload` 关键字，用法如下：
+
+```
+
+function test() {
+	print("Test 1")
+}
+test()
+function test() {
+	print("Test 2")
+}
+test()
+function overload test() {
+	print("Test 3")
+}
+test()
+function another() {
+	print("Test 4")
+}
+test = another
+test()
+```
+
+其中，第二个函数重载会触发 `OverloadWarning` 触发警告，因为它用 `function` 关键字显式声明了一个重名的函数，但是没有用 `overload` 标识。但是第四个不是显式声明，而是赋值，并不会触发警告。
+
+请注意：**显式重载的函数会以最后一个函数为准**，也就是说，如上示例代码应当输出三次 `Test 3`。
+
+- 加入了 `Sequence`、`Math` 和 `Algorithm` 库，位于代码仓库根目录下的 `lib` 目录中。
+
 ### update 22nd Feb 2022
 
 
