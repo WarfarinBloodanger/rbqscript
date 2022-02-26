@@ -1,0 +1,31 @@
+class _sequence_ {
+	function process(a : reference, f : function) {
+		foreach(i, range(0, len(a))) a[i] = f(a[i])
+	}
+	function has_any(a : reference, f : function) {
+		foreach(i, range(0, len(a))) {
+			if(f(a[i])) return true
+		}
+		return false
+	}
+	function count(a : reference, f : function) {
+		local cnt = 0
+		foreach(i, range(0, len(a))) {
+			if(f(a[i])) cnt = cnt + 1
+		}
+		return cnt
+	}
+	function all_position(a : reference, f : function) {
+		local pos = {}
+		local cnt = 0
+		foreach(i, range(0, len(a))) {
+			if(f(a[i])) {
+				pos[cnt] = i
+				cnt = cnt + 1
+			}
+		}
+		return pos
+	}
+}
+
+Sequence = _sequence()
