@@ -1,0 +1,10 @@
+class _math_ {
+	function gcd(a : number, b : number) {
+		if(a < 0 || b < 0) return -1
+		else {
+			if(b) return this.gcd(b, a % b)
+			else return a
+		}
+	}
+}
+Math = _math_()
