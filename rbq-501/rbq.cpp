@@ -89,6 +89,7 @@ bool call_pause = false;
 bool show_param = false;
 bool short_op = true; 
 bool strict_name = true;
+bool overload_check = true;
 
 #define STEP (void(printf("Step: %d\n", __LINE__))) 
 #define OPCODE const unsigned char
@@ -2658,7 +2659,7 @@ Val call_builtin(string func, Val * params, int pcnt, int obj_id) {
 }
 int x;
 string random_name() {
-	return "fvm_" + tostr(x++);
+	return "#fvm_" + tostr(x++);
 }
 
 vector<string> all_func;
@@ -2872,9 +2873,11 @@ try {
 			case CALL: {
 				int cnt = rstack.pop().num;
 				Val * par = new Val[cnt];
-				for(int i = 0; i < cnt; i++) par[i] = rstack.pop();
+				for(int i = 0; i < cnt; i++) {
+					par[i] = rstack.pop();
+				}
 				if(rstack.top().type != FUNC_TYPE) {
-					error("'" + get_type_name(rstack.top()) + "' is not callable.");
+					error("'" + get_type_name(rstack.top()) + "' ('" + rstack.top().to_str() + "') is not callable", "TypeError");
 				}
 				Val addr = rstack.pop();
 				Val ret = run_byte(addr, rstack.t, par, cnt);
@@ -2963,7 +2966,7 @@ try {
 				break;
 			}
 			case FUNC: {
-				rstack.push(func_val(rstack.top().str));
+				rstack.push(func_val(rstack.pop().str));
 				break;
 			}
 			case LRMV: {
@@ -4248,6 +4251,8 @@ void get_arg_name(vector<string> vs, vector<string> & arg_name, vector<string> &
 
 vector<unsigned char> make_function(string & fname, string prefix = "") {
 	vector<unsigned char> rets;
+	bool overload = false;
+	if(next_token_is("overload")) overload = true, next_token();
 	Token func_name = next_token();
 	Token param_list = next_token();
 	param_list = MIDDLE(param_list.str);
@@ -4277,6 +4282,11 @@ vector<unsigned char> make_function(string & fname, string prefix = "") {
 	fname = func_name.str;
 	
 	string fname2 = prefix + fname;
+	if(overload_check) {
+		if(has_func(fname2) && !overload) {
+			warn("function '" + fname2 + "' overloaded but not declared with qualifier 'overload'", "OverloadWarning");
+		}
+	}
 	all_func.push_back(fname2);
 	int func_id = identifier_id(fname2);
 	int id = func_id;
@@ -4948,6 +4958,9 @@ int main(int argc, char ** argv) {
 		}
 		else if(p == "-xnochkname") {
 			strict_name = false;
+		}
+		else if(p == "-xnochkoverload") {
+			overload_check = false;
 		}
 	}
 	
