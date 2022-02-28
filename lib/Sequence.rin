@@ -26,6 +26,13 @@ class _sequence_ {
 		}
 		return pos
 	}
+	function zip(a : reference, b : reference, f : zipper) {
+		local pos = {}
+		foreach(i, range(0, len(a))) {
+			pos[i] = zipper(a[i], b[i]);
+		}
+		return pos
+	}
 }
 
 Sequence = _sequence()
