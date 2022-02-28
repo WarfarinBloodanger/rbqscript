@@ -2656,6 +2656,10 @@ Val call_builtin(string func, Val * params, int pcnt, int obj_id) {
 		CNT(1);
 		return (string)MD5::encode(params[0].to_str());
 	}
+	else if(func == "typeof") {
+		CNT(1);
+		return get_type_name(params[0]);
+	}
 }
 int x;
 string random_name() {
@@ -4035,6 +4039,7 @@ void init2() {
 	BUILTIN("values");
 	BUILTIN("range");
 	BUILTIN("_md5");
+	BUILTIN("typeof");
 }
 
 struct Token {
@@ -4757,7 +4762,10 @@ void read_bytecode(string file) {
 	}
 }
 stringstream all_source("");
+set<string> imported_file;
 void read_file_source(string file) {
+	if(imported_file.count(file)) return;
+	imported_file.insert(file);
 	ifstream fcin(file.c_str());
 	if(!fcin) {
 		error("file " + file + " not found.", "FileError");
@@ -4906,16 +4914,16 @@ int main(int argc, char ** argv) {
 		cout << VM_NAME << ' ' << VM_VERSION << endl;
 		cout << LAUNCH_MSG << endl;
 		cli = true;
-		while(read_cli_source()) {
-			call_stack.clear(); 
-			try {
+		try {
+			while(read_cli_source()) {
+				call_stack.clear(); 
 				start_compile();
 				if(debug) debug_output();
 				start_vm();
 			}
-			catch(Val s) {
-				cout << s.str << endl;
-			}
+		}
+		catch(Val s) {
+			cout << s.str << endl;
 		}
 		return 0;
 	}
