@@ -1,4 +1,4 @@
-class _sequence_ {
+class _seq_ {
 	function process(a : reference, f : function) {
 		foreach(i, range(0, len(a))) a[i] = f(a[i])
 	}
@@ -35,4 +35,4 @@ class _sequence_ {
 	}
 }
 
-Sequence = _sequence()
+Seq = _seq_()
