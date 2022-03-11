@@ -1,0 +1,32 @@
+include Math.rin
+
+class Frac {
+	var num : number
+	var den : number
+	function check() {
+		local flag
+		flag = 1
+		if(this.num < 0) flag = -flag
+		if(this.den < 0) flag = -flag
+		if(this.num < 0) this.num = -this.num
+		if(this.den < 0) this.den = -this.den
+		local gcd = Math.gcd(this.num, this.den)
+		this.num = this.num / gcd * flag
+		this.den = this.den / gcd
+	}
+	function to_string() {
+		this.check()
+		return "" + this.num + "/" + this.den
+	}
+	function add(f : Frac) {
+		this.check()
+		f.check()
+		local ret = Frac(0, 0)
+		local t1 = this.num * f.den
+		local t2 = this.den * f.num
+		ret.num = t1 + t2
+		ret.den = this.den * f.den
+		ret.check()
+		return ret
+	}
+}
