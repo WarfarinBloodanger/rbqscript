@@ -4914,6 +4914,7 @@ int main(int argc, char ** argv) {
 		cout << VM_NAME << ' ' << VM_VERSION << endl;
 		cout << LAUNCH_MSG << endl;
 		cli = true;
+		RESTART:
 		try {
 			while(read_cli_source()) {
 				call_stack.clear(); 
@@ -4924,6 +4925,7 @@ int main(int argc, char ** argv) {
 		}
 		catch(Val s) {
 			cout << s.str << endl;
+			goto RESTART;
 		}
 		return 0;
 	}
