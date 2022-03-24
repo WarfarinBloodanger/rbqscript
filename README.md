@@ -1,5 +1,13 @@
 # RBQScript
 
+### update 24th Mar 2022
+
+- 修复了 `rbq xxx.rbq` 的命令行启动方式无法运行文件的错误；
+- 修复了带空格符的字符串编译后，存在的读入问题。详情可见：https://github.com/WarfarinBloodanger/rbqscript/issues/2
+- 修复部分 0 day bug；
+- 在 rbqup 中添加部分被漏掉的字节码；
+
+
 ### update 26th Feb 2022
 
 - 修复了对象不会被垃圾回收的 bug；
