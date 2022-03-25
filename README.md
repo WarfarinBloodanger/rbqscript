@@ -1,5 +1,16 @@
 # RBQScript
 
+### update 25th Mar 2022
+
+- 修复了单引号带空格字符串无法正确编译的问题。详情可见：https://github.com/WarfarinBloodanger/rbqscript/issues/3#
+- 修复了在特定情况下的带括号字符串无法正确编译的问题。
+- 添加新内置函数 `read_eof`，用来检测键盘读入是否达到输入末尾（`Ctrl+Z`）。如下示例程序：可以不断读入两高精度整数（即 `big_number` 类型）直到用户输入 Ctrl+Z 终止为止：
+
+```
+while(!read_eof()) print((lambda {x, y} {x * y})(big(read_string()), big(read_string())))  
+```
+- 修复部分 0 day bug；
+
 ### update 24th Mar 2022
 
 - 修复了 `rbq xxx.rbq` 的命令行启动方式无法运行文件的错误；
