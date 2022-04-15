@@ -1,5 +1,12 @@
 # RBQScript
 
+### update 15th Apr 2022
+
+- 加快了虚拟机的启动时间。
+- 完善了防非法访问内存的保护机制。
+- 增加了动态申请内存，运行所耗内存现在和运行时间和操作数量成正比。
+- 修复部分 0 day bug。
+
 ### update 25th Mar 2022
 
 - 修复了单引号带空格字符串无法正确编译的问题。详情可见：https://github.com/WarfarinBloodanger/rbqscript/issues/3#
