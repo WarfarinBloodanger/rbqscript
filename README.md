@@ -11,13 +11,17 @@
 - 完善了防非法访问内存的保护机制。
 - 增加了动态申请内存，运行所耗内存现在和运行时间和操作数量成正比。
 - 修复部分 0 day bug。
+
+### update 1st Apr 2022 12:00 A.M.
+
 - 回退了虚拟机的优化；
 - 删除了正则表达式库 `regex.rin`；
 - 删除了网络库 `netio.rin`；
 - 删除了多线程库 `thread.rin`；
-- 删除了加密库 `encrypt.rin`。
+- 删除了加密库 `encrypt.rin`；
+- 愚人节快乐。
 
-### update 1st Apr 2022
+### update 1st Apr 2022 0:00 A.M.
 
 - 优化了虚拟机，等价的代码实现在 RBQScript 上的运行时间仅为 Java / Kotlin 的 30%；
 - 实现了正则表达式库 `regex.rin`；
