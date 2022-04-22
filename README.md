@@ -29,7 +29,6 @@ while(!read_eof()) print((lambda {x, y} {x * y})(big(read_string()), big(read_st
 ### update 26th Feb 2022
 
 - 修复了对象不会被垃圾回收的 bug；
-
 - 修复了对象垃圾回收错误的 bug；
 - 修复了垃圾回收后内存未释放的 bug；
 - 加入了函数重载检查机制（见下），可以通过选项 `-xnochkoverload` 关闭；
