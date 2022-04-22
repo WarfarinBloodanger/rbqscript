@@ -42,7 +42,7 @@ while(!read_eof()) print((lambda {x, y} {x * y})(big(read_string()), big(read_st
 
 加入了 Windows 和 Linux 系统下的加载本地方法函数（load_native）。
 
-修复部分 0day Bug。
+修复部分 0 day Bug。
 
 ```
 
@@ -78,9 +78,9 @@ test()
 - 加入了 `_md5` 内置函数；
 - 加入了变量名检查机制，可以通过在命令行选项中开启 `-nochkname` 来禁用检查；-
 - 加入了有效变量名的查验机制，现在不再会对 `;` 之类的意外符号作 `NameError` 报错；
-- 将 function 类型细化，分为 built-in function、`native-function` 和 `function`；
+- 将 `function` 类型细化，分为 `built-in function`、`native-function` 和 `function`；
 - 将命令行变为交互式命令行；
-- 删除了诸如 (1:3) 的字面量，加入了 range(1, 3) 作为替代品；
+- 删除了诸如 `(1:3)` 的字面量，加入了 `range(1, 3)` 作为替代品；
 
 ### update 31th Dec 2021
 
@@ -88,15 +88,15 @@ test()
 
 创建方式：`test = map()`。
 
-可以使用任何类型作为 map 的键值，如果该键在 map 中不存在，则会返回 `undefined` 值。
+可以使用任何类型作为 `map` 的键值，如果该键在 `map` 中不存在，则会返回 `undefined` 值。
 
 语法：`a[key] = value`。如果 `key` 是字符串类型，可以使用 `a.key = value`。
 
 配套提供了 3 个新内置函数：
 
-- clear_map，接受一个 map 类型的参数，清除 map 中的所有内容；
-- keys，接受一个 map 类型的参数，返回一个列表，表示 map 中的所有键名；
-- values，接受一个 map 类型的参数，返回一个列表，表示 map 中的所有键值。
+- `clear_map`，接受一个 `map` 类型的参数，清除 map 中的所有内容；
+- `keys`，接受一个 `map` 类型的参数，返回一个列表，表示 map 中的所有键名；
+- `values`，接受一个 `map` 类型的参数，返回一个列表，表示 map 中的所有键值。
 
 示例如下：
 
@@ -109,7 +109,7 @@ list = keys(a)
 foreach(i, list) print(i, "->", list[i])
 ```
 
-**Reference**，即列表类型**不再支持字符串下标**。以下代码会报错：
+**Reference** 即列表类型**不再支持字符串下标**。以下代码会报错：
 
 ```
 a = {}
@@ -133,7 +133,7 @@ function add(a [: param_type], b [: param_type]...) [: param_type] {
 
 如果没有在参数 / 函数声明之后加上类型声明，则会默认使用 `any`。**请注意：Object 只会匹配对象类型，内置类型无法匹配。**
 
-将错误提示修改得更加可读，减少了 VerifyError 的数量。
+将错误提示修改得更加可读，减少了 `VerifyError` 的数量。
 
 ### update 9th Dec 2021:
 
@@ -152,13 +152,13 @@ class <classname> extends <supername> {
 }
 ```
 
-1. 字段和方法全部都是 public 且非静态类型。
-2. **在成员方法内部访问字段必须显式的加上 this 关键字**。
-3. 为保持兼容，struct 保留，一切行为不变。
+1. 字段和方法全部都是 public 公有且非静态类型。
+2. **在成员方法内部访问字段必须显式的加上 `this` 关键字**。
+3. 为保持兼容，`struct` 保留，一切行为不变。
 
-4. **若在成员方法内部声明局部变量，建议显式加上 local 关键字**。
+4. **若在成员方法内部声明局部变量，建议显式加上 `local` 关键字**。
 
-5. **struct 的效率高于 class，若声明纯数据类型的数据复合体，建议使用 struct 而非 class**。
+5. **`struct` 的效率高于 `class`，若声明纯数据类型的数据复合体，建议使用 `struct` 而非 `class`**。
 
 
 ### update 6th Dec 2021:
@@ -168,7 +168,7 @@ class <classname> extends <supername> {
 ```
 struct ClassName [extends SuperName] (field1, field2, field3...)
 ```
-这将会定义一个叫做 ClassName 的结构体。目前 RBQScript **struct 不支持成员函数**，因此称作是 struct，不是 class。
+这将会定义一个叫做 `ClassName` 的结构体。目前 RBQScript **`struct` 不支持成员函数**，因此称作是 `struct`，不是 `class`。
 
 构造对象的方法：使用类名作为函数名调用，**从父类开始，按声明的字段顺序写入参数**。如：
 
@@ -196,7 +196,7 @@ function make_Class(a) {
 }
 ```
 
-Object 是所有类的基类，在定义的时候不需要显示地写上 `extends Object`，会自动继承。
+`Object` 是所有类的基类，在定义的时候不需要显示地写上 `extends Object`，会自动继承。
 
 特殊字段：`obj.class_name` 返回该对象的类的名称，`obj.super_name` 返回该对象的基类的名称。
 
