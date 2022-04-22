@@ -23,7 +23,7 @@
 
 ### update 1st Apr 2022 0:00 A.M.
 
-- 优化了虚拟机，等价的代码实现在 RBQScript 上的运行时间仅为 Java / Kotlin 的 30%；
+- 优化了虚拟机，等价的代码实现在 RBQScript 上的运行时间仅为 Java / Kotlin 的 80%；
 - 实现了正则表达式库 `regex.rin`；
 - 实现了网络库 `netio.rin`；
 - 实现了多线程库 `thread.rin`；
