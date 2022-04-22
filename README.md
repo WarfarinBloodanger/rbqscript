@@ -1,11 +1,25 @@
 # RBQScript
 
+### update 22nd Apr 2022
+
+- 完善用户手册。
+
+
 ### update 15th Apr 2022
 
 - 加快了虚拟机的启动时间。
 - 完善了防非法访问内存的保护机制。
 - 增加了动态申请内存，运行所耗内存现在和运行时间和操作数量成正比。
 - 修复部分 0 day bug。
+
+
+### update 1st Apr 2022
+
+- 优化了虚拟机，等价的代码实现在 RBQScript 上的运行时间仅为 Java / Kotlin 的 30%；
+- 实现了正则表达式库 `regex.rin`；
+- 实现了网络库 `netio.rin`；
+- 实现了多线程库 `thread.rin`；
+- 实现了加密库 `encrypt.rin`。
 
 ### update 25th Mar 2022
 
@@ -36,11 +50,11 @@ while(!read_eof()) print((lambda {x, y} {x * y})(big(read_string()), big(read_st
 
 ### update 7th Feb 2022
 
-加入了对象序列化 / 反序列化函数（serialize 和 unserialize）。
+加入了对象序列化 / 反序列化函数（`serialize` 和 `unserialize`）。
 
 改写部分代码以适配 C++ 11 标准。
 
-加入了 Windows 和 Linux 系统下的加载本地方法函数（load_native）。
+加入了 Windows 和 Linux 系统下的加载本地方法函数（`load_native`）。
 
 修复部分 0 day Bug。
 
