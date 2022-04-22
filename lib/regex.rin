@@ -1,0 +1,10 @@
+class _regex_ {
+	function match(text, pattern) {
+		return _regex_match(text, pattern)
+	}
+	function match_all(text, pattern) {
+		return _regex_match_all(text, pattern)
+	}
+}
+
+regex = _regex_()
