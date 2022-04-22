@@ -35,6 +35,16 @@ while(!read_eof()) print((lambda {x, y} {x * y})(big(read_string()), big(read_st
 - 加入了函数重载检查机制（见下），可以通过选项 `-xnochkoverload` 关闭；
 - 加入了 `overload` 关键字，用法如下：
 
+### update 7th Feb 2022
+
+加入了对象序列化 / 反序列化函数（serialize 和 unserialize）。
+
+改写部分代码以适配 C++ 11 标准。
+
+加入了 Windows 和 Linux 系统下的加载本地方法函数（load_native）。
+
+修复部分 0day Bug。
+
 ```
 
 function test() {
@@ -74,6 +84,137 @@ test()
 - 将命令行变为交互式命令行；
 
 - 删除了诸如 (1:3) 的字面量，加入了 range(1, 3) 作为替代品；
+
+### update 31th Dec 2021
+
+新增一种内置类型：`map` 类，即映射表。
+
+创建方式：`test = map()`。
+
+可以使用任何类型作为 map 的键值，如果该键在 map 中不存在，则会返回 `undefined` 值。
+
+语法：`a[key] = value`。如果 `key` 是字符串类型，可以使用 `a.key = value`。
+
+配套提供了 3 个新内置函数：
+
+- clear_map，接受一个 map 类型的参数，清除 map 中的所有内容；
+- keys，接受一个 map 类型的参数，返回一个列表，表示 map 中的所有键名；
+- values，接受一个 map 类型的参数，返回一个列表，表示 map 中的所有键值。
+
+示例如下：
+
+```
+a = map()
+a["test"] = 5
+a[4] = "num"
+print(a.test)
+list = keys(a)
+foreach(i, list) print(i, "->", list[i])
+```
+
+**Reference**，即列表类型**不再支持字符串下标**。以下代码会报错：
+
+```
+a = {}
+a["test"] = 5
+```
+
+报错：`RuntimeError: "should use 'number' as subscript of 'reference', not 'string'"`。
+
+加入了类型检查机制，语法与 Kotlin / TypeScript 类似。
+
+```
+class Foo {
+	var x [: param_type], y [: param_type]
+}
+function add(a [: param_type], b [: param_type]...) [: param_type] {
+	return a + b
+}
+```
+
+类型检查机制是可选的。`any` 可以匹配所有类型。
+
+如果没有在参数 / 函数声明之后加上类型声明，则会默认使用 `any`。**请注意：Object 只会匹配对象类型，内置类型无法匹配。**
+
+将错误提示修改得更加可读，减少了 VerifyError 的数量。
+
+### update 9th Dec 2021:
+
+正式加入 `class` 关键字，语法：
+
+```
+class <classname> extends <supername> {
+	var field
+	var f1, f2, f3...
+	function method1(v) {
+		print(this.f1)
+	}
+	function method2() {
+		this.f2 = this.f1 + this.f3
+	}
+}
+```
+
+1. 字段和方法全部都是 public 且非静态类型。
+2. **在成员方法内部访问字段必须显式的加上 this 关键字**。
+3. 为保持兼容，struct 保留，一切行为不变。
+
+4. **若在成员方法内部声明局部变量，建议显式加上 local 关键字**。
+
+5. **struct 的效率高于 class，若声明纯数据类型的数据复合体，建议使用 struct 而非 class**。
+
+
+### update 6th Dec 2021:
+
+加入了对象系统，语法如下：
+
+```
+struct ClassName [extends SuperName] (field1, field2, field3...)
+```
+这将会定义一个叫做 ClassName 的结构体。目前 RBQScript **struct 不支持成员函数**，因此称作是 struct，不是 class。
+
+构造对象的方法：使用类名作为函数名调用，**从父类开始，按声明的字段顺序写入参数**。如：
+
+```
+struct Class(a, b)
+struct Class2 extends Class(c, d)
+obj = Class("hello", 5 + 9)
+obj2 = Class2("world", 3 + 1, 5.433, {1, 2, 3})
+print("obj: a is", obj.a, ", b is", obj.b)
+print("obj2: a is", obj2.a, ", b is", obj2.b, ", c is", obj2.c, ", d[1] is", obj2.d[1])
+```
+
+输出：
+```
+obj: a is hello , b is 14
+obj2: a is world , b is 4 , c is 5.433 , d[1] is 2
+```
+
+**推荐自己定义构造函数，如下：**
+
+```
+struct Class(a, b)
+function make_Class(a) {
+    return Class(a, a * a)
+}
+```
+
+Object 是所有类的基类，在定义的时候不需要显示地写上 `extends Object`，会自动继承。
+
+特殊字段：`obj.class_name` 返回该对象的类的名称，`obj.super_name` 返回该对象的基类的名称。
+
+```
+struct Person(name)
+struct OIer extends Person(age)
+oier = OIer("ff0", 343)
+print(oier.name, oier.age, oier.class_name, oier.super_name)
+```
+
+输出：
+
+```
+ff0 343 OIer Person
+```
 
 ***
 
@@ -296,147 +437,12 @@ RBQScript 还支持第二种函数定义：Lambda 匿名函数。格式为：`(l
 - `unserialize` 接受一个数组类型参数，返回一个值，为反序列化后的值。如果不存在该值对应的类，将会创建一个**不包含成员方法**的纯数据类；
 - `load_native` 接受两个字符串参数，第一个字符串参数指定本地方法的文件，第二个字符串参数指定函数名，返回一个函数；
 
-### update 6th Dec 2021:
-
-加入了对象系统，语法如下：
-
-```
-struct ClassName [extends SuperName] (field1, field2, field3...)
-```
-这将会定义一个叫做 ClassName 的结构体。目前 RBQScript **struct 不支持成员函数**，因此称作是 struct，不是 class。
-
-构造对象的方法：使用类名作为函数名调用，**从父类开始，按声明的字段顺序写入参数**。如：
-
-```
-struct Class(a, b)
-struct Class2 extends Class(c, d)
-obj = Class("hello", 5 + 9)
-obj2 = Class2("world", 3 + 1, 5.433, {1, 2, 3})
-print("obj: a is", obj.a, ", b is", obj.b)
-print("obj2: a is", obj2.a, ", b is", obj2.b, ", c is", obj2.c, ", d[1] is", obj2.d[1])
-```
-
-输出：
-```
-obj: a is hello , b is 14
-obj2: a is world , b is 4 , c is 5.433 , d[1] is 2
-```
-
-**推荐自己定义构造函数，如下：**
-
-```
-struct Class(a, b)
-function make_Class(a) {
-    return Class(a, a * a)
-}
-```
-
-Object 是所有类的基类，在定义的时候不需要显示地写上 `extends Object`，会自动继承。
-
-特殊字段：`obj.class_name` 返回该对象的类的名称，`obj.super_name` 返回该对象的基类的名称。
-
-```
-struct Person(name)
-struct OIer extends Person(age)
-oier = OIer("ff0", 343)
-print(oier.name, oier.age, oier.class_name, oier.super_name)
-```
-
-输出：
-
-```
-ff0 343 OIer Person
-```
 
 
-### update 9th Dec 2021:
 
-正式加入 `class` 关键字，语法：
 
-```
-class <classname> extends <supername> {
-	var field
-	var f1, f2, f3...
-	function method1(v) {
-		print(this.f1)
-	}
-	function method2() {
-		this.f2 = this.f1 + this.f3
-	}
-}
-```
 
-1. 字段和方法全部都是 public 且非静态类型。
 
-2. **在成员方法内部访问字段必须显式的加上 this 关键字**。
 
-3. 为保持兼容，struct 保留，一切行为不变。
-
-4. **若在成员方法内部声明局部变量，建议显式加上 local 关键字**。
-
-5. **struct 的效率高于 class，若声明纯数据类型的数据复合体，建议使用 struct 而非 class**。
-
-### update 31th Dec 2021
-
-新增一种内置类型：`map` 类，即映射表。
-
-创建方式：`test = map()`。
-
-可以使用任何类型作为 map 的键值，如果该键在 map 中不存在，则会返回 `undefined` 值。
-
-语法：`a[key] = value`。如果 `key` 是字符串类型，可以使用 `a.key = value`。
-
-配套提供了 3 个新内置函数：
-
-- clear_map，接受一个 map 类型的参数，清除 map 中的所有内容；
-- keys，接受一个 map 类型的参数，返回一个列表，表示 map 中的所有键名；
-- values，接受一个 map 类型的参数，返回一个列表，表示 map 中的所有键值。
-
-示例如下：
-
-```
-a = map()
-a["test"] = 5
-a[4] = "num"
-print(a.test)
-list = keys(a)
-foreach(i, list) print(i, "->", list[i])
-```
-
-**Reference**，即列表类型**不再支持字符串下标**。以下代码会报错：
-
-```
-a = {}
-a["test"] = 5
-```
-
-报错：`RuntimeError: "should use 'number' as subscript of 'reference', not 'string'"`。
-
-加入了类型检查机制，语法与 Kotlin / TypeScript 类似。
-
-```
-class Foo {
-	var x [: param_type], y [: param_type]
-}
-function add(a [: param_type], b [: param_type]...) [: param_type] {
-	return a + b
-}
-```
-
-类型检查机制是可选的。`any` 可以匹配所有类型。
-
-如果没有在参数 / 函数声明之后加上类型声明，则会默认使用 `any`。**请注意：Object 只会匹配对象类型，内置类型无法匹配。**
-
-将错误提示修改得更加可读，减少了 VerifyError 的数量。
-
-### update 7th Feb 2022
-
-加入了对象序列化 / 反序列化函数（serialize 和 unserialize）。
-
-改写部分代码以适配 C++ 11 标准。
-
-加入了 Windows 和 Linux 系统下的加载本地方法函数（load_native）。
-
-修复部分 0day Bug。
 
 
