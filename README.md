@@ -79,10 +79,8 @@ test()
 - 加入了 `_md5` 内置函数；
 - 加入了变量名检查机制，可以通过在命令行选项中开启 `-nochkname` 来禁用检查；-
 - 加入了有效变量名的查验机制，现在不再会对 `;` 之类的意外符号作 `NameError` 报错；
-
 - 将 function 类型细化，分为 built-in function、`native-function` 和 `function`；
 - 将命令行变为交互式命令行；
-
 - 删除了诸如 (1:3) 的字面量，加入了 range(1, 3) 作为替代品；
 
 ### update 31th Dec 2021
