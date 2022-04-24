@@ -1,5 +1,10 @@
 # RBQScript
 
+### update 24th Apr 2022
+
+- 修复了特定情况下数组下标识别错误的 bug；
+- 修复部分 0 day bug。
+
 ### update 22nd Apr 2022
 
 - 重新实现了正则表达式库 `regex.rin`，包含两个函数：`match(text, pattern)`，返回一个字符串表示匹配给定模式串的第一个子串；`match_all(text, pattern)`，返回一个列表表示匹配给定模式串的所有子串；
@@ -10,6 +15,7 @@ print(a)
 ```
 新版本输出：`{1, 2, 3, {"a", "\"}}`；
 旧版本输出：`$4096`。
+- 修复部分 0 day bug。
 
 
 ### update 15th Apr 2022
@@ -63,16 +69,6 @@ while(!read_eof()) print((lambda {x, y} {x * y})(big(read_string()), big(read_st
 - 加入了函数重载检查机制（见下），可以通过选项 `-xnochkoverload` 关闭；
 - 加入了 `overload` 关键字，用法如下：
 
-### update 7th Feb 2022
-
-加入了对象序列化 / 反序列化函数（`serialize` 和 `unserialize`）。
-
-改写部分代码以适配 C++ 11 标准。
-
-加入了 Windows 和 Linux 系统下的加载本地方法函数（`load_native`）。
-
-修复部分 0 day Bug。
-
 ```
 
 function test() {
@@ -102,7 +98,6 @@ test()
 
 ### update 22nd Feb 2022
 
-
 - 加入了异常追溯；
 - 加入了 `_md5` 内置函数；
 - 加入了变量名检查机制，可以通过在命令行选项中开启 `-nochkname` 来禁用检查；-
@@ -111,15 +106,16 @@ test()
 - 将命令行变为交互式命令行；
 - 删除了诸如 `(1:3)` 的字面量，加入了 `range(1, 3)` 作为替代品；
 
+### update 7th Feb 2022
+
+- 加入了对象序列化 / 反序列化函数（`serialize` 和 `unserialize`）。
+- 改写部分代码以适配 C++ 11 标准。
+- 加入了 Windows 和 Linux 系统下的加载本地方法函数（`load_native`）。
+- 修复部分 0 day Bug。
+
 ### update 31th Dec 2021
 
-新增一种内置类型：`map` 类，即映射表。
-
-创建方式：`test = map()`。
-
-可以使用任何类型作为 `map` 的键值，如果该键在 `map` 中不存在，则会返回 `undefined` 值。
-
-语法：`a[key] = value`。如果 `key` 是字符串类型，可以使用 `a.key = value`。
+- 新增一种内置类型：`map` 类，即映射表。创建方式：`test = map()`。可以使用任何类型作为 `map` 的键值，如果该键在 `map` 中不存在，则会返回 `undefined` 值。语法：`a[key] = value`。如果 `key` 是字符串类型，可以使用 `a.key = value`。
 
 配套提供了 3 个新内置函数：
 
@@ -158,11 +154,9 @@ function add(a [: param_type], b [: param_type]...) [: param_type] {
 }
 ```
 
-类型检查机制是可选的。`any` 可以匹配所有类型。
+- 类型检查机制是可选的。`any` 可以匹配所有类型。如果没有在参数 / 函数声明之后加上类型声明，则会默认使用 `any`。**请注意：Object 只会匹配对象类型，内置类型无法匹配。**
+- 将错误提示修改得更加可读，减少了 `VerifyError` 的数量。
 
-如果没有在参数 / 函数声明之后加上类型声明，则会默认使用 `any`。**请注意：Object 只会匹配对象类型，内置类型无法匹配。**
-
-将错误提示修改得更加可读，减少了 `VerifyError` 的数量。
 
 ### update 9th Dec 2021:
 
