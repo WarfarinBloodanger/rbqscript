@@ -74,7 +74,7 @@ using namespace std;
 const int LIMIT = 0x7fffffff;
 
 const string VM_NAME = "RBQScript";
-const string VM_VERSION = "5.13";
+const string VM_VERSION = "5.19";
 const string LAUNCH_MSG = "Type \"help\", \"copyright\", \"credits\" or \"license\" for more information.";
 const string HELP = "See [https://github.com/WarfarinBloodanger/rbqscript].";
 const string COPYRIGHT = "See [https://github.com/WarfarinBloodanger/rbqscript] or send email to arknightswarfarin@163.com for more.";
@@ -810,11 +810,12 @@ struct Val {
 };
 
 void error(string msg, string type) {
-	string r = "Exception " + type + ": \"" + msg + "\"\n";
-	r += "Callstack traceback:\n";
+	string r = "";
+	r += "Traceback (most recent call last):\n";
 	for(int i = call_stack.size() - 1; i >= 0; i--) {
-		r += "    - at " + get_func_adj(call_stack[i]) + " " + call_stack[i] + "\n";
+		r += "  in <" + get_func_adj(call_stack[i]) + " " + call_stack[i] + ">\n";
 	}
+	r += type + ": " + msg;
 	if(cli) throw Val(r); 
 	else {
 		cout << r << endl;
@@ -2409,6 +2410,8 @@ void map_values(map<Val, Val> & hashmap, vector<Val> & vals) {
 string to_hex(double);
 double to_hex(string);
 
+bool print_called = false;
+
 Val call_builtin(string func, Val * params, int pcnt, int obj_id) {
 	#define CNT(a) if(pcnt != a) error("number of arguments of builtin function '" + func + "' should be " + tostr(a) + ", given " + tostr(pcnt), "RuntimeError")
 	#define TYPE(a, t) if(pcnt <= a || params[a].type != t##_TYPE) error("arguments of builtin function '" + func + "' should be '" + type_name[t##_TYPE] + "', not '" + type_name[params[a].type] + "'", "RuntimeError")
@@ -2442,6 +2445,7 @@ Val call_builtin(string func, Val * params, int pcnt, int obj_id) {
 		exit(params[0].num);
 	}
 	else if(func == "print") {
+		print_called = true;
 		for(int i = 0; i < pcnt; i++) cout << params[i].to_str() << ' ';
 		cout << endl;
 		return pcnt;
@@ -2975,6 +2979,11 @@ try {
 				break;
 			}
 			case END: {
+				if (cli && !print_called) {
+					if(!rstack.empty()) {
+						cout << rstack.top().to_str() << endl;
+					}
+				}
 				return Val((string)"End");
 			    break;
 			}
@@ -3056,7 +3065,7 @@ try {
 			}
 			case LDTH: {
 				if(fval.obj_ref == -1) {
-					error("Token 'this' shouldn't be used in a non-method function.", "RunError");
+					error("Token 'this' shouldn't be used in a non-method function.", "RuntimeError");
 				}
 				rstack.push(obj_val(fval.obj_ref));
 				break;
@@ -3097,7 +3106,7 @@ try {
 				string type = rstack.pop().str;
 				int which = rstack.pop().num;
 				if(!check_type(params[which], type)) {
-					error("should use '" + type + "' as argument " + tostr(which) + " of function '" + func + "', not '" + get_type_name(params[which]) + "'", "RuntimeError");
+					error("should use '" + type + "' as argument " + tostr(which + 1) + " of function '" + func + "', not '" + get_type_name(params[which]) + "'", "RuntimeError");
 				}
 				break;
 			}
@@ -3359,41 +3368,125 @@ vector<string> split(string text, char c, bool space = true) {
     bool includeSpace = false;
     vector<string> tmp;
     vector<string> ret;
-    int top[4] = {
-        0, 0, 0, 0
-    };
     char stq = '-';
     for(int i = 0; i < text.length(); i++) {
-        string cur2 = cur + text[i];
-        if(text[i] == '(') {
-            top[0]++;
-        } else if(text[i] == ')') {
-            top[0]--;
-        } else if(text[i] == '[') {
-            top[1]++;
-        } else if(text[i] == ']') {
-            top[1]--;
-        } else if(text[i] == '{') {
-            top[2]++;
-        } else if(text[i] == '}') {
-            top[2]--;
-        } else if(((stq == '-' && (text[i] == '"' || text[i] == '\'')) || (text[i] == stq)) && (i == 0 || text[i - 1] != '\\')) {
-            top[3] = !top[3];
-            if(stq == '-') stq = text[i];
-            else stq = '-';
-        }
-        if((((c == text[i]) || (isspace(text[i])))) && !top[0] && !top[1] && !top[2] && !top[3]) {
-            tmp.push_back(cur);
-            cur = "";
-            if(!isspace(text[i]) || includeSpace) {
-                cur += text[i];
-                tmp.push_back(cur);
-                cur = "";
-            }
-        } else {
-            if(top[3]) cur += text[i];
-            else if(!isspace(text[i])) cur += text[i];
-        }
+        if (text[i] == '(') {
+        	int top = 1;
+        	bool inq = false;
+			cur += "(";
+			while(top && i < text.length()) {
+				i++;
+				if((!isspace(text[i]) && text[i] != '\\') || inq) cur = cur + text[i];
+				if(!inq && text[i] == '(') top++;
+				else if(!inq && text[i] == ')') top--;
+				if(text[i] == '\\') {
+					if(i < text.length() - 1) {
+						i++;
+						cur = cur + text[i];
+					}
+				}
+				else if((stq == '-' && (text[i] == '"' || text[i] == '\'')) || (stq != '-' && text[i] == stq)) {
+					inq = !inq;
+					if(stq == '-') stq = text[i];
+					else stq = '-';
+				}
+			}
+		}
+		else if(text[i] == '[') {
+			int top = 1;
+			bool inq = false;
+			if(cur != "") {
+				tmp.push_back(cur);
+			}
+			cur += "[";
+			while(top && i < text.length()) {
+				i++;
+				if((!isspace(text[i]) && text[i] != '\\') || inq) cur = cur + text[i];
+				if(!inq && text[i] == '[') top++;
+				else if(!inq && text[i] == ']') top--;
+				if(text[i] == '\\') {
+					if(i < text.length() - 1) {
+						i++;
+						cur = cur + text[i];
+					}
+				}
+				else if((stq == '-' && (text[i] == '"' || text[i] == '\'')) || (stq != '-' && text[i] == stq)) {
+					inq = !inq;
+					if(stq == '-') stq = text[i];
+					else stq = '-';
+				}
+			}
+		}
+		else if(text[i] == '{') {
+			int top = 1;
+			bool inq = false;
+			cur += "{";
+			while(top && i < text.length()) {
+				i++;
+				if((!isspace(text[i]) && text[i] != '\\') || inq) cur = cur + text[i];
+				if(!inq && text[i] == '{') top++;
+				else if(!inq && text[i] == '}') top--;
+				if(text[i] == '\\') {
+					if(i < text.length() - 1) {
+						i++;
+						cur = cur + text[i];
+					}
+				}
+				else if((stq == '-' && (text[i] == '"' || text[i] == '\'')) || (stq != '-' && text[i] == stq)) {
+					inq = !inq;
+					if(stq == '-') stq = text[i];
+					else stq = '-';
+				}
+			}
+		}
+		else if(text[i] == '"') {
+			int top = 1;
+			cur += "\"";
+			while(i < text.length()) {
+				i++;
+				if(text[i] == '\\') {
+					cur = cur + text[i];
+					if(i < text.length() - 1) {
+						i++;
+						cur = cur + text[i];
+					}
+				}
+				else if(text[i] == '"') {
+					cur = cur + text[i];
+					break;
+				}
+				else cur = cur + text[i];
+			}
+		}
+		else if(text[i] == '\'') {
+			int top = 1;
+			cur += "\'";
+			while(i < text.length()) {
+				i++;
+				if(text[i] == '\\') {
+					cur = cur + text[i];
+					if(i < text.length() - 1) {
+						i++;
+						cur = cur + text[i];
+					}
+				}
+				else if(text[i] == '\'') {
+					cur = cur + text[i];
+					break;
+				}
+				else cur = cur + text[i];
+			}
+		}
+		else if (text[i] == c) {
+			tmp.push_back(cur);
+			cur = "";
+			cur += c;
+			tmp.push_back(cur);
+			cur = "";
+		}
+		else {
+			cur = cur + text[i];
+		}
     }
     tmp.push_back(cur);
     for(int i = 0; i < tmp.size(); i++) {
@@ -4006,7 +4099,7 @@ vector<unsigned char> execute(string stat) {
 		
 		if(op != "X") right = "(" + left + ")" + op + "(" + right + ")";
 		ret = set_var_ref(left, right);
-    } else if(flag == "stop") {
+    } else if(flag == "#") {
     } else {
         ret = compile_expression(stat);
     }
@@ -4018,6 +4111,7 @@ void init2() {
 	all_func.push_back(LAUNCH_BLOCK);
 	new_frame();
 	heap.resize(MAX_ARR_CNT);
+	print_called = false;
 #define BIND(c, rbp, code) bind_power[(c)] = (rbp)
     BIND("+", 60, ADD);
     BIND("-", 60, DEC);
@@ -4895,10 +4989,6 @@ bool read_cli_source() {
 	string str;
 	cout << ">>> ";
 	if(!getline(cin, str)) return false;
-	if(str == "license") cout << LICENSE << endl;
-	if(str == "help") cout << HELP << endl;
-	if(str == "copyright") cout << COPYRIGHT << endl;
-	if(str == "credits") cout << CREDITS << endl; 
 	if(str == "") {
 		printf(">>> ");
 		return true;
@@ -5022,6 +5112,7 @@ int main(int argc, char ** argv) {
 		try {
 			while(read_cli_source()) {
 				call_stack.clear(); 
+				print_called = false;
 				start_compile();
 				if(debug) debug_output();
 				start_vm();
