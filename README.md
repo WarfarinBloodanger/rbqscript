@@ -1,5 +1,13 @@
 # RBQScript
 
+### update 25th Apr 2022
+
+- 修复了特定情况下数组声明报错 `SyntaxError: invalid token ','` 的 bug；
+- 升级了交互式命令行（REPL）的体制，现在可以输出表达式结果；
+- 修复部分提示信息表述错误；
+- 改变了异常提示信息的格式；
+- 修复部分 0 day bug。
+
 ### update 24th Apr 2022
 
 - 修复了特定情况下数组下标识别错误的 bug；
