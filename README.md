@@ -1,5 +1,10 @@
 # RBQScript
 
+### update 25th May 2022
+
+- 修复了下标编译错误的 bug；
+- 修复部分 0 day bug。
+
 ### update 25th Apr 2022
 
 - 修复了特定情况下数组声明报错 `SyntaxError: invalid token ','` 的 bug；
