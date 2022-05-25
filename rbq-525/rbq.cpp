@@ -4978,14 +4978,43 @@ void read_file_source(string file) {
 		else all_source << str << endl;
 	}
 }
+
+int paren_cnt[3];
+
+bool update_paren_cnt(string & s) {
+	char inq = '-';
+	for (int i = 0; i < s.length(); i++) {
+		if (inq != '-' && s[i] == inq) {
+			if (i > 0 && s[i - 1] != '\\') inq = '-'; 
+		}
+		else if (s[i] == '\'' || s[i] == '\"') inq = s[i];
+		else {
+			switch(s[i]) {
+				case '(': paren_cnt[0]++; break;
+				case ')': paren_cnt[0]--; break;
+				case '[': paren_cnt[1]++; break;
+				case ']': paren_cnt[1]--; break;
+				case '{': paren_cnt[2]++; break;
+				case '}': paren_cnt[2]--; break;
+			}
+		}
+	}
+	return paren_cnt[0] || paren_cnt[1] || paren_cnt[2];
+}
+
 bool read_cli_source() {
 	all_source.str("");
 	all_source.clear(); 
-	string str;
+	string str, s;
 	cout << ">>> ";
-	if(!getline(cin, str)) return false;
+	if(!getline(cin, s)) return false;
+	str += s + "\n";
+	while (update_paren_cnt(s)) {
+		cout << "... ";
+		getline(cin, s), str += s + "\n";
+	}
 	if(str == "") {
-		printf(">>> ");
+		printf("\n>>> ");
 		return true;
 	}
 	str = trim(str);
