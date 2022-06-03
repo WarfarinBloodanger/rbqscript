@@ -6,5 +6,17 @@ class _math_ {
 			else return a
 		}
 	}
+	function lcm(a : number, b : number) {
+		if(a < 0 || b < 0) return -1
+		else return a * b / this.gcd(a, b)
+	}
+	function factorial(a : number) {
+		if(a < 0) return -1
+		else{
+			fac = 1
+			for(i, 2, i <=a, 1) fac = fac * i
+			return fac
+		}
+	}
 }
 Math = _math_()
