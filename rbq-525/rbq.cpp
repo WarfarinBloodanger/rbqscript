@@ -4441,9 +4441,10 @@ vector<unsigned char> make_function(string & fname, string prefix = "") {
 	vector<string> arg_type;
 	get_arg_name(remove_all(split(param_list.str, ','), ","), args, arg_type);
 	
-	vector<unsigned char> func, tmp, tmp2;
+	vector<unsigned char> func, tmp2, tmp;
 	for(int i = 0; i < arg_type.size(); i++) {
 		if(arg_type[i] == "any") continue;
+		tmp = vector<unsigned char>();
 		string type = arg_type[i];
 		tmp2 = load_int(i);
 		for(int i = 0; i < tmp2.size(); i++) tmp.push_back(tmp2[i]);
