@@ -1,5 +1,9 @@
 # RBQScript
 
+### update 4th June 2022
+
+- 修复部分 0 day bug。
+
 ### update 25th May 2022
 
 - 修复了下标编译错误的 bug；
