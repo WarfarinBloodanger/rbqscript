@@ -4553,7 +4553,9 @@ vector<unsigned char> compile_statement() {
 		string str = "";
 		string cur = next_token().str;
 		while(cur != EOL_LABEL) str += cur, cur = next_token().str;
-		vector<unsigned char> rets2 = compile_expression(str);
+		vector<unsigned char> rets2;
+		if (str == "") rets2.push_back(LDNUL);
+		else rets2 = compile_expression(str);
 		rets2.push_back(RET);
 		for(int i = 0; i < rets2.size(); i++) rets.push_back(rets2[i]);
 	}
