@@ -917,7 +917,7 @@ enum {
 bool check_type(Val, string);
 string get_type_name(Val);
 
-struct ObjectManager {
+namespace object_controller {
 	map<string, map<string, int> > field_id;
 	map<string, vector<string> > fields;
 	map<string, vector<string> > field_type;
@@ -990,7 +990,7 @@ struct ObjectManager {
 		return fields.count(cls);
 	}
 	
-	Object construct(string cls, Val * args, int argc, int id) {
+	Object construct(string cls, vector<Val> args, int argc, int id) {
 		Object obj;
 		obj.class_name = cls;
 		if(argc > fields[cls].size()) return obj;
@@ -1016,8 +1016,6 @@ struct ObjectManager {
 	}
 };
 
-ObjectManager manager;
-
 string obj_to_str(int ref) {
 	if(ref >= obj_heap.size()) error("Object at [0x" + tostr(ref) + "] out of heap bound", "OutOfBoundError");
 	string cls = obj_heap[ref].class_name;
@@ -1027,7 +1025,7 @@ string obj_to_str(int ref) {
 } 
 
 const int MAX_FILE_CNT = 512;
-struct FileManager {
+namespace file_controller {
 	FILE * file_ptrs[MAX_FILE_CNT];
 	int size;
 	FileManager() {
@@ -1096,8 +1094,6 @@ struct FileManager {
 		fflush(file_ptrs[handle]);
 	}
 };
-
-FileManager file_manager;
 
 #define DEFINE_OP(x) \
 inline Val operator x (Val a, Val b) {\
@@ -1389,17 +1385,13 @@ const int ARR_GROW = 1024 * 4;
 Val get_heap(int);
 Val make_array(vector<Val>);
 
-struct Serializer {
+namespace serializer {
 	set<string> class_sr;
 	map<int, int> obj_sr;
 	map<int, int> obj_served;
 	vector<unsigned char> out;
 	int ip;
 	int obj_cnt;
-	
-	Serializer() {
-		init();
-	}
 	
 	void init() {
 		obj_cnt = 0, out.clear();
@@ -1446,7 +1438,11 @@ struct Serializer {
 		string s = "";
 		for(int i = 0; i < siz; i++) s += read();
 		return s;
-	} 
+	}
+	void serialize_class(string cls);
+	string unserialize_class();
+	void serialize_obj(int id);
+	Val unserialize_obj();
 	
 	Val unserialize() {
 		unsigned char uc;
@@ -1547,7 +1543,7 @@ struct Serializer {
 					read(); // '>'
 				}
 				int id = get_next_obj();
-				obj_heap[id / MAX_FIELD_CNT] = manager.construct("map", NULL, 0, id);
+				obj_heap[id / MAX_FIELD_CNT] = object_controller::construct("map", vector<Val>(), 0, id);
 				obj_served[loc] = id;
 				obj_heap[id / MAX_FIELD_CNT].hashmap = hashmap;
 				return obj_val(id);
@@ -1557,13 +1553,13 @@ struct Serializer {
 				int loc = read_long_int();
 				string cls_name = unserialize_class();
 				int siz = read_int();
-				Val * vals = new Val[siz];
+				vector<Val> vals = vector<Val>(siz); 
 				for(int i = 0; i < siz; i++) {
 					vals[i] = unserialize(); 
 				}
 				read(); // END_OBJ
 				int id = get_next_obj();
-				obj_heap[id / MAX_FIELD_CNT] = manager.construct(cls_name, vals, siz, id);
+				obj_heap[id / MAX_FIELD_CNT] = object_controller::construct(cls_name, vals, siz, id);
 				obj_served[loc] = id;
 				return obj_val(id);
 				break;
@@ -1597,8 +1593,8 @@ struct Serializer {
 		obj_sr[id] = obj_cnt, obj_cnt++;
 		add_long_int(obj_cnt);
 		serialize_class(obj_heap[id].class_name);
-		add_int(manager.fields[obj_heap[id].class_name].size());
-		for(int i = 0; i < manager.fields[obj_heap[id].class_name].size(); i++) {
+		add_int(object_controller::fields[obj_heap[id].class_name].size());
+		for(int i = 0; i < object_controller::fields[obj_heap[id].class_name].size(); i++) {
 			serialize(obj_heap[id].field[i]);
 		}
 		add(END_OBJ);
@@ -1645,7 +1641,7 @@ struct Serializer {
 				else {
 					super_class = unserialize_class();
 				}
-				manager.define_class(cls, super_class, field_names, vector<char>(siz), field_type, true);
+				object_controller::define_class(cls, super_class, field_names, vector<char>(siz), field_type, true);
 				return cls;
 				break;
 			}
@@ -1677,13 +1673,13 @@ struct Serializer {
 				add('[');
 				return;
 			}
-			string super = manager.super(cls);
+			string super = object_controller::super(cls);
 			add(NEW_CLASS);
 			add_str(cls);
-			add_int(manager.fields[cls].size());
-			for(int i = 0; i < manager.fields[cls].size(); i++) {
-				serialize_class(manager.field_type[cls][i]);
-				add_str(manager.fields[cls][i]);
+			add_int(object_controller::fields[cls].size());
+			for(int i = 0; i < object_controller::fields[cls].size(); i++) {
+				serialize_class(object_controller::field_type[cls][i]);
+				add_str(object_controller::fields[cls][i]);
 			}
 			add(END_CLASS);
 			if(super != "Object") {
@@ -1694,8 +1690,6 @@ struct Serializer {
 		}
 	} 
 };
-
-Serializer serializer;
 
 unsigned char PADDING[64];
 struct MD5 {
@@ -1929,16 +1923,18 @@ struct Regex {
 	}
 };
 
+Val native_args[1024];
 typedef Val (*RbqNativeFunc)(int argc, Val * argv);
-struct NativeManager {
+namespace native_controller {
 	vector<RbqNativeFunc> native_funcs;
 	set<string> natives;
 	RbqNativeFunc get_func(int handle) {
 		if(handle >= native_funcs.size() || handle < 0) error("Invalid handle value " + tostr(handle), "RuntimeError");
 		return native_funcs[handle];
 	}
-	Val call(int handle, int argc, Val * argv) {
-		return get_func(handle)(argc, argv);
+	Val call(int handle, int argc, vector<Val> argv) {
+		for (int i = 0; i < argv.size(); i++) native_args[i] = argv[i];
+		return get_func(handle)(argc, native_args);
 	}
 	Val load_native(string file, string funcname) {
 		RbqNativeFunc func = NULL;
@@ -1966,8 +1962,6 @@ struct NativeManager {
 		return natives.count(f);
 	}
 };
-
-NativeManager native_manager;
 
 string opname[256];
 
@@ -2191,7 +2185,7 @@ void mark_visible(Val v) {
 		else {
 			if(!obj_visible[v.obj_ref / MAX_FIELD_CNT]) {
 				obj_visible[v.obj_ref / MAX_FIELD_CNT] = true;
-				int field_size = manager.get_field_cnt(obj_heap[v.obj_ref / MAX_FIELD_CNT].class_name);
+				int field_size = object_controller::get_field_cnt(obj_heap[v.obj_ref / MAX_FIELD_CNT].class_name);
 				for(int i = 0; i < field_size; i++) {
 					v2 = obj_heap[v.obj_ref / MAX_FIELD_CNT].field[i];
 					if(v2.type != UNDEFINED_TYPE) mark_visible(v2);
@@ -2267,7 +2261,7 @@ Val get_sub(Val a, Val b) {
 			return b;
 		}
 		if(b.type != STR_TYPE) error("'" + get_type_name(b) + "' is not a valid member of '" + get_type_name(a) + "'", "RuntimeError");
-		return obj_val(a.obj_ref + manager.identifier_id(obj_heap[a.obj_ref / MAX_FIELD_CNT].class_name, b.str));
+		return obj_val(a.obj_ref + object_controller::identifier_id(obj_heap[a.obj_ref / MAX_FIELD_CNT].class_name, b.str));
 	}
 	else if(a.type == RNG_TYPE) {
 		if(b.type != NUM_TYPE) error("should use 'number' as subscript of 'range', not '" + get_type_name(b) + "'", "RuntimeError");
@@ -2301,7 +2295,7 @@ bool check_type(Val v, string type) {
 	if(type == "any") return true;
 	switch(v.type) {
 		case OBJ_TYPE: {
-			return manager.instanceof(obj_heap[v.obj_ref / MAX_FIELD_CNT].class_name, type);
+			return object_controller::instanceof(obj_heap[v.obj_ref / MAX_FIELD_CNT].class_name, type);
 			break;
 		}
 		default: return type_name[v.type] == type;
@@ -2320,11 +2314,11 @@ int get_func_id(string func) {
 map<int, vector<int> > reg_map;
 set<string> builtin;
 inline bool is_builtin(string func) {
-	return builtin.find(func) != builtin.end() || manager.has_class(func) || native_manager.is_native(func);
+	return builtin.find(func) != builtin.end() || object_controller::has_class(func) || native_controller::is_native(func);
 }
 string get_func_adj(string s) {
-	if(native_manager.is_native(s)) return "native function";
-	if(manager.has_class(s)) return "constructor";
+	if(native_controller::is_native(s)) return "native function";
+	if(object_controller::has_class(s)) return "constructor";
 	if(is_builtin(s)) return "built-in function";
 	return "function";
 }
@@ -2411,7 +2405,7 @@ double to_hex(string);
 
 bool print_called = false;
 
-Val call_builtin(string func, Val * params, int pcnt, int obj_id) {
+Val call_builtin(string func, vector<Val> params, int pcnt, int obj_id) {
 	#define CNT(a) if(pcnt != a) error("number of arguments of builtin function '" + func + "' should be " + tostr(a) + ", given " + tostr(pcnt), "RuntimeError")
 	#define TYPE(a, t) if(pcnt <= a || params[a].type != t##_TYPE) error("arguments of builtin function '" + func + "' should be '" + type_name[t##_TYPE] + "', not '" + type_name[params[a].type] + "'", "RuntimeError")
 	#define CHECK_MATH(x, m) \
@@ -2422,16 +2416,16 @@ Val call_builtin(string func, Val * params, int pcnt, int obj_id) {
 	#define CHECK_FILE(x, m, t) \
 	else if(func == (string)"file_" + x) {\
 		TYPE(0, t);\
-		return file_manager.m(params[0].num);\
+		return file_controller::m(params[0].num);\
 	}
 	
-	if(manager.has_class(func)) {
+	if(object_controller::has_class(func)) {
 		int id = get_next_obj();
-		obj_heap[id / MAX_FIELD_CNT] = manager.construct(func, params, pcnt, id);
+		obj_heap[id / MAX_FIELD_CNT] = object_controller::construct(func, params, pcnt, id);
 		return obj_val(id);
 	}
-	else if(native_manager.is_native(func)) {
-		return native_manager.call(atoi(func.substr(19, func.length() - 19).c_str()), pcnt, params);
+	else if(native_controller::is_native(func)) {
+		return native_controller::call(atoi(func.substr(19, func.length() - 19).c_str()), pcnt, params);
 	}
 	else if(func == "instanceof") {
 		CNT(2);
@@ -2537,33 +2531,33 @@ Val call_builtin(string func, Val * params, int pcnt, int obj_id) {
 	CHECK_MATH("abs", fabs)
 	else if(func == "file_open") {
 		TYPE(0, STR);
-		if(pcnt == 1) return file_manager.file_open(params[0].str);
+		if(pcnt == 1) return file_controller::file_open(params[0].str);
 		else if(pcnt == 2) {
 			TYPE(1, STR);
-			return file_manager.file_open(params[0].str, params[1].str);
+			return file_controller::file_open(params[0].str, params[1].str);
 		}
 		error("number of arguments of builtin function '" + func + "' should between 1 and 2, given " + tostr(pcnt), "RuntimeError");
 	}
 	else if(func == "file_close") {
 		CNT(1);
 		TYPE(0, NUM);
-		file_manager.file_close(params[0].num);
+		file_controller::file_close(params[0].num);
 		return null_val();
 	}
 	else if(func == "file_read_string") {
 		CNT(1);
 		TYPE(0, NUM);
-		return file_manager.fread_string(params[0].num);
+		return file_controller::fread_string(params[0].num);
 	}
 	else if(func == "file_read_number") {
 		CNT(1);
 		TYPE(0, NUM);
-		return file_manager.fread_number(params[0].num);
+		return file_controller::fread_number(params[0].num);
 	}
 	else if(func == "file_read_line") {
 		CNT(1);
 		TYPE(0, NUM);
-		return file_manager.fread_line(params[0].num);
+		return file_controller::fread_line(params[0].num);
 	}
 	else if(func == "read_string") {
 		if(pcnt == 1) cout << params[0].to_str();
@@ -2590,20 +2584,20 @@ Val call_builtin(string func, Val * params, int pcnt, int obj_id) {
 		CNT(2);
 		TYPE(0, NUM);
 		TYPE(1, STR);
-		file_manager.fwrite_string(params[0].num, params[1].str);
+		file_controller::fwrite_string(params[0].num, params[1].str);
 		return null_val();
 	}
 	else if(func == "file_write_number") {
 		CNT(2);
 		TYPE(0, NUM);
 		TYPE(1, NUM);
-		file_manager.fwrite_number(params[0].num, params[1].num);
+		file_controller::fwrite_number(params[0].num, params[1].num);
 		return null_val();
 	}
 	else if(func == "file_eof") {
 		CNT(1);
 		TYPE(0, NUM);
-		return file_manager.file_eof(params[0].num);
+		return file_controller::file_eof(params[0].num);
 	}
 	else if(func == "str2ascii") {
 		CNT(1);
@@ -2668,10 +2662,10 @@ Val call_builtin(string func, Val * params, int pcnt, int obj_id) {
 	}
 	else if(func == "serialize") {
 		CNT(1);
-		serializer.init();
-		serializer.serialize(params[0]);
+		serializer::init();
+		serializer::serialize(params[0]);
 		vector<Val> ret;
-		for(int i = 0; i < serializer.out.size(); i++) ret.push_back(serializer.out[i]);
+		for(int i = 0; i < serializer::out.size(); i++) ret.push_back(serializer::out[i]);
 		return make_array(ret);
 	}
 	else if(func == "unserialize") {
@@ -2686,10 +2680,10 @@ Val call_builtin(string func, Val * params, int pcnt, int obj_id) {
 			}
 			else return (string)"Invalid code " + v.to_str(); 
 		}
-		serializer.init();
-		serializer.out = vs;
+		serializer::init();
+		serializer::out = vs;
 		try {
-			return serializer.unserialize();
+			return serializer::unserialize();
 		} 
 		catch(string s) {
 			return s;
@@ -2705,7 +2699,7 @@ Val call_builtin(string func, Val * params, int pcnt, int obj_id) {
 		CNT(2);
 		TYPE(0, STR);
 		TYPE(1, STR);
-		return native_manager.load_native(params[0].str, params[1].str);
+		return native_controller::load_native(params[0].str, params[1].str);
 	}
 	else if(func == "range") {
 		CNT(2);
@@ -2753,10 +2747,10 @@ bool has_func(string func) {
 	for(int i = 0; i < all_func.size(); i++) if(all_func[i] == func) return true;
 	return false;
 }
-Val run_byte(Val fval, int stk_offset, Val * params, int pcnt) { 
+Val run_byte(Val fval, int stk_offset, vector<Val> params, int pcnt) { 
 try {
 	string ret_type = "any";
-	reverse(params, params + pcnt);
+	reverse(params.begin(), params.end());
 	int stkoff = stk_offset;
 	if(fval.type != FUNC_TYPE) {
 		error("Should call a function. Not a " + type_name[fval.type]);
@@ -2958,7 +2952,7 @@ try {
 			}
 			case CALL: {
 				int cnt = rstack.pop().num;
-				Val * par = new Val[cnt];
+				vector<Val> par = vector<Val>(cnt);
 				for(int i = 0; i < cnt; i++) {
 					par[i] = rstack.pop();
 				}
@@ -2974,7 +2968,7 @@ try {
 				int cnt = rstack.pop().num;
 				vstmp.clear(), vctmp.clear(), vstmp2.clear();
 				for(int i = 0; i < cnt; i++) vctmp.push_back(rstack.pop().num), vstmp.push_back(rstack.pop().str), vstmp2.push_back(rstack.pop().str) ;
-				manager.define_class(rstack.pop().str, rstack.pop().str, vstmp, vctmp, vstmp2);
+				object_controller::define_class(rstack.pop().str, rstack.pop().str, vstmp, vctmp, vstmp2);
 			    break;
 			}
 			case LDC0: case LDC1: case LDC2: case LDC3: 
@@ -3032,7 +3026,7 @@ try {
 					obj_heap[v2.extra / MAX_FIELD_CNT].hashmap[v2] = v;
 				}
 				else if(v2.type == REF_TYPE) set_heap(addr, v);
-				else if(v2.type == OBJ_TYPE) manager.set_objheap(v2.obj_ref, v);
+				else if(v2.type == OBJ_TYPE) object_controller::set_objheap(v2.obj_ref, v);
 				else error("wrong type of subscript setting");
 			    break;
 			}
@@ -4212,8 +4206,8 @@ void init2() {
 	
 	for(int i = 0; i < MAX_OBJ_CNT; i++) obj_pool.push(i);
 	
-	manager.define_class("Object", "Object", tokenize("class_name super_name"), vector<char>(2), tokenize("any any"), true);
-	manager.define_class("map", "Object", vector<string>(0), vector<char>(0), vector<string>(0), true);
+	object_controller::define_class("Object", "Object", tokenize("class_name super_name"), vector<char>(2), tokenize("any any"), true);
+	object_controller::define_class("map", "Object", vector<string>(0), vector<char>(0), vector<string>(0), true);
 	BUILTIN("map");
 	BUILTIN("clear_map");
 	BUILTIN("keys");
@@ -5068,7 +5062,7 @@ void start_compile() {
 }
 
 void start_vm() {
-	run_byte(func_val(LAUNCH_BLOCK), 0, NULL, 0).to_str();
+	run_byte(func_val(LAUNCH_BLOCK), 0, vector<Val> (), 0).to_str();
 } 
 
 const string HEX_CHAR = "0123456789ABCDEF";
