@@ -1,10 +1,17 @@
 # RBQScript
 
+### update 1st July 2022
+
+- 修复了 `big_number` 不能与 `number` 作取模运算的问题；
+- 修复了纯数字字符串编译后的 rbq 文件执行异常的问题；
+- 修复部分 0 day bug。
+
 ### update 28th June 2022
 
 - 修复了不带返回值的 `return` 语句造成无法编译的 bug；
 - 修复了内存泄漏的 bug；
-- 优化了代码实现方式及时空占用。
+- 优化了代码实现方式及时空占用；
+- 修复部分 0 day bug。
 
 ### update 25th June 2022
 
