@@ -1181,6 +1181,7 @@ inline Val operator || (Val a, Val b) {
 	return !((!a) && (!b));
 }
 
+/*
 inline Val operator % (Val a, Val b) {
 	Val c;
 	if(a.type == NUM_TYPE && b.type == NUM_TYPE) {
@@ -1191,7 +1192,7 @@ inline Val operator % (Val a, Val b) {
 	}
 	return c;
 }
-
+*/
 inline Val operator ~ (Val a) {
 	if(a.type == NUM_TYPE) {
 		return ~(int)a.num;
@@ -1201,7 +1202,29 @@ inline Val operator ~ (Val a) {
 
 DEFINE_OP(-) 
 DEFINE_OP(*)
-DEFINE_OP(/) 
+DEFINE_OP(/)
+inline Val operator % (Val a, Val b) {
+	Val c;
+	if(a.type == NUM_TYPE && b.type == NUM_TYPE) {
+		c = make_num(fmod(a.num, b.num));
+	}
+	else if(a.type == NUM_TYPE && b.type == BIG_TYPE) {
+		BigInteger tmp = a.to_big().big;
+		c = make_big(b.big % tmp);
+	}
+	else if(b.type == NUM_TYPE && a.type == BIG_TYPE) {
+		BigInteger tmp = b.to_big().big;
+		c = make_big(a.big % tmp);
+	}
+	else if(b.type == BIG_TYPE && a.type == BIG_TYPE) {
+		c = a.big % b.big;
+	}
+	else {
+		error("cannot operate calculation '" + get_type_name(a) + "'%'" + get_type_name(b) + "'");
+	}
+	c.check();
+	return c;
+}
 
 DEFINE_OP(>=) 
 DEFINE_OP(<=) 
@@ -4890,7 +4913,7 @@ void save_bytecode(string file) {
 	for(int i = 0; i < cpool_pos; i++) {
 		if(cpool[i].type == STR_TYPE) {
 			fcout << "\" ";
-			fcout << cpool[i].str.length();
+			fcout << cpool[i].str.length() << " ";
 			for(int j = 0; j < cpool[i].str.length(); j++) {
 				fcout << cpool[i].str[j];
 			}
@@ -4927,6 +4950,7 @@ void read_bytecode(string file) {
 		if(d[0] == '"') {
 			int len; fcin >> len;
 			string r = "";
+			fcin.get();
 			for(int i = 1; i <= len; i++) {
 				char a; fcin.get(a); r += a; 
 			}
