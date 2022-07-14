@@ -1,5 +1,12 @@
 # RBQScript
 
+### update 14th July 2022
+
+- 修复了部分运算符结果错误的问题；
+- 修复了循环引用的对象在序列化时造成死循环的问题；
+- 修复了序列化函数 `serialize` 输出调试信息的问题；
+- 修复部分 0 day bug。
+
 ### update 1st July 2022
 
 - 修复了 `big_number` 不能与 `number` 作取模运算的问题；
