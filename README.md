@@ -291,18 +291,18 @@ ff0 343 OIer Person
 ## Part 1. RBQScript 启动方式：
 
 1. 首先找到要下载的版本，如 rbq-472 文件夹内下载 4.72 版本；
-2. 下载 fvm.cpp（或 rbq.cpp），使用 C++ 编译器（作者编译器版本：C++ 11 TDM GCC 4.8.1 64-bit Release）编译生成 fvm.exe。
+2. 下载 rbq.cpp（或 fvm.cpp），使用 C++ 编译器（作者编译器版本：C++ 11 TDM GCC 4.8.1 64-bit Release）编译生成 rbq.exe。
 
-编译器兼解释器：`fvm.exe`。
+编译器兼解释器：`rbq.exe`。
 
 总命令格式：
 ```
-fvm [<byte-file>] | [[-i <input-file>] [-o <output-file>] [<options>] [<switches>]] 
+rbq [<byte-file>] | [[-i <input-file>] [-o <output-file>] [<options>] [<switches>]] 
 ```
 
-格式一：`fvm [<byte-file>]`，将会执行 `<byte-file>` 中的字节码。如果检测到 `<bytecode-file>` 没有拓展名，将会自动加上一个 `.rbq` 作为文件名，否则直接使用它作为文件名。
+格式一：`rbq [<byte-file>]`，将会执行 `<byte-file>` 中的字节码。如果检测到 `<bytecode-file>` 没有拓展名，将会自动加上一个 `.rbq` 作为文件名，否则直接使用它作为文件名。
 
-格式二：`fvm -i <input-file> -o <output-file> [<options>] {<switches>}`。
+格式二：`rbq -i <input-file> -o <output-file> [<options>] {<switches>}`。
 
 将会从 `<input-file>` 里面读入源代码文件，以 `<options>` 和 `<switches>` 为附加条件进行编译后输出字节码文件到 `<output-file>`。
 
@@ -480,7 +480,7 @@ RBQScript 还支持第二种函数定义：Lambda 匿名函数。格式为：`(l
 4. 当有四个参数时，将会把这个数组从第三个参数到第四个参数之间的下标全部填充为第二个参数。
 - 数学函数：使用 `math_xxx` 调用，都只接受一个实数参数。其中 `xxx` 可以替换为对应功能：这些功能包含：`sin/cos/tan/asin/acos/atan/sqrt/floor/ceil/log/log10/abs`。如 `math_sin` 计算正弦值。
 
-- read 系列函数：不接受参数，`read_number`、`read_string`、`read_line` 分别读入一个实数、字符串（空白符分割）和一整行（换行符分割）并返回；
+- read 系列函数：不接受参数，`read_number`、`read_string`、`read_line` 分别读入一个实数、字符串（空白符分割）和一整行（换行符分割）并返回，`read_eof` 用来检测键盘读入是否达到输入末尾（`Ctrl+Z`）。
 
 - file 系列函数：
 1. `file_open` 的第一个参数是文件名，如果有第二个参数，则将其作为打开文件的方式，返回一个整数表示文件的句柄；
@@ -502,8 +502,10 @@ RBQScript 还支持第二种函数定义：Lambda 匿名函数。格式为：`(l
 - `serialize` 接受一个任意类型参数，返回一个数组，为参数序列化后的字节流；
 - `unserialize` 接受一个数组类型参数，返回一个值，为反序列化后的值。如果不存在该值对应的类，将会创建一个**不包含成员方法**的纯数据类；
 - `load_native` 接受两个字符串参数，第一个字符串参数指定本地方法的文件，第二个字符串参数指定函数名，返回一个函数；
-
-
+- `clear_map` 接受一个 `map` 类型的参数，清除 map 中的所有内容；
+- `keys` 接受一个 `map` 类型的参数，返回一个列表，表示 map 中的所有键名；
+- `values` 接受一个 `map` 类型的参数，返回一个列表，表示 map 中的所有键值。
+- `_abort(msg, excpt)` 用于抛出异常。
 
 
 
