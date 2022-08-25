@@ -1,3 +1,5 @@
+# 本仓库已停止更新，请到新仓库 (RBQScript 6.0)[https://github.com/WarfarinBloodanger/rbqscript6] 下载最新版本的 RBQScript 源码 
+
 # RBQScript
 
 ### update 14th July 2022
